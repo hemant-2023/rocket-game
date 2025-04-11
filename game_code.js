@@ -35,6 +35,33 @@ class RocketGame extends Phaser.Scene {
         this.physics.add.overlap(this.bullets, this.rocks, this.destroyRock, null, this);
         this.physics.add.overlap(this.rocket, this.rocks, this.gameOver, null, this);
 
+        // Mobile controls
+        if (!this.sys.game.device.os.desktop) {
+            this.leftButton = this.add.rectangle(60, 540, 100, 100, 0x6666ff).setInteractive();
+            this.rightButton = this.add.rectangle(180, 540, 100, 100, 0x6666ff).setInteractive();
+            this.fireButton = this.add.rectangle(740, 540, 100, 100, 0xff6666).setInteractive();
+
+            this.leftButtonText = this.add.text(30, 520, 'Left', { fontSize: '20px', fill: '#fff' });
+            this.rightButtonText = this.add.text(150, 520, 'Right', { fontSize: '20px', fill: '#fff' });
+            this.fireButtonText = this.add.text(700, 520, 'Shoot', { fontSize: '20px', fill: '#fff' });
+
+            this.isMovingLeft = false;
+            this.isMovingRight = false;
+            this.isFiring = false;
+
+            this.leftButton.on('pointerdown', () => this.isMovingLeft = true);
+            this.leftButton.on('pointerup', () => this.isMovingLeft = false);
+            this.leftButton.on('pointerout', () => this.isMovingLeft = false);
+
+            this.rightButton.on('pointerdown', () => this.isMovingRight = true);
+            this.rightButton.on('pointerup', () => this.isMovingRight = false);
+            this.rightButton.on('pointerout', () => this.isMovingRight = false);
+
+            this.fireButton.on('pointerdown', () => this.isFiring = true);
+            this.fireButton.on('pointerup', () => this.isFiring = false);
+            this.fireButton.on('pointerout', () => this.isFiring = false);
+        }
+
         this.timerEvent = this.time.addEvent({
             delay: 1000,
             callback: () => {
@@ -60,15 +87,15 @@ class RocketGame extends Phaser.Scene {
     update(time) {
         if (this.gameIsOver) return;
 
-        if (this.cursors.left.isDown) {
-            this.rocket.setVelocityX(-300);
-        } else if (this.cursors.right.isDown) {
-            this.rocket.setVelocityX(300);
-        } else {
-            this.rocket.setVelocityX(0);
+        let velocityX = 0;
+        if (this.cursors.left.isDown || this.isMovingLeft) {
+            velocityX = -300;
+        } else if (this.cursors.right.isDown || this.isMovingRight) {
+            velocityX = 300;
         }
+        this.rocket.setVelocityX(velocityX);
 
-        if (this.spaceKey.isDown && time > this.lastFired) {
+        if ((this.spaceKey.isDown || this.isFiring) && time > this.lastFired) {
             const bullet = this.bullets.create(this.rocket.x, this.rocket.y - 20, 'bullet');
             bullet.setVelocityY(-400);
             this.lastFired = time + 300;
@@ -84,7 +111,6 @@ class RocketGame extends Phaser.Scene {
         const x = Phaser.Math.Between(50, 750);
         const rock = this.rocks.create(x, 0, 'rock');
         rock.setVelocityY(this.rockSpeed);
-        rock.setScale(0.5); // Make the rock smaller
     }
 
     destroyRock(bullet, rock) {
