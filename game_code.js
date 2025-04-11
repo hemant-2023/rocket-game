@@ -1,9 +1,6 @@
 class RocketGame extends Phaser.Scene {
     constructor() {
         super({ key: 'RocketGame' });
-        this.survivalTime = 60;
-        this.rockSpeed = 200;
-        this.gameIsOver = false;
     }
 
     preload() {
@@ -13,6 +10,10 @@ class RocketGame extends Phaser.Scene {
     }
 
     create() {
+        this.survivalTime = 60;
+        this.rockSpeed = 200;
+        this.gameIsOver = false;
+
         this.targetScore = Phaser.Math.Between(500, 800);
 
         this.rocket = this.physics.add.image(400, 550, 'rocket').setCollideWorldBounds(true);
@@ -37,6 +38,8 @@ class RocketGame extends Phaser.Scene {
         this.timerEvent = this.time.addEvent({
             delay: 1000,
             callback: () => {
+                if (this.gameIsOver) return;
+
                 this.survivalTime--;
 
                 if (this.survivalTime % 10 === 0) {
@@ -81,6 +84,7 @@ class RocketGame extends Phaser.Scene {
         const x = Phaser.Math.Between(50, 750);
         const rock = this.rocks.create(x, 0, 'rock');
         rock.setVelocityY(this.rockSpeed);
+        rock.setScale(0.5); // Make the rock smaller
     }
 
     destroyRock(bullet, rock) {
@@ -99,13 +103,12 @@ class RocketGame extends Phaser.Scene {
     }
 
     endGame(message) {
+        this.gameIsOver = true;
         this.physics.pause();
         this.rocket.setTint(0xff0000);
         this.add.text(250, 300, message, { fontSize: '48px', fill: '#fff' });
         this.timerEvent.remove();
-        this.gameIsOver = true;
 
-        // Restart Button
         const restartButton = this.add.text(330, 380, 'Restart', {
             fontSize: '32px',
             fill: '#0f0',
@@ -115,6 +118,7 @@ class RocketGame extends Phaser.Scene {
         }).setInteractive();
 
         restartButton.on('pointerdown', () => {
+            restartButton.disableInteractive();
             this.scene.restart();
         });
     }
